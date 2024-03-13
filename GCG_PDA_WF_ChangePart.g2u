@@ -1,0 +1,96 @@
+Program.Sub.ScreenSU.Start
+Gui.Form..Create
+Gui.Form..Caption("Workflow")
+Gui.Form..Size(4200,2295)
+Gui.Form..MinX(0)
+Gui.Form..MinY(0)
+Gui.Form..Position(0,0)
+Gui.Form..BackColor(-2147483633)
+Gui.Form..MousePointer(0)
+Gui.Form..Event(UnLoad,Form_UnLoad)
+Gui.Form.chkDeposit.Create(CheckBox)
+Gui.Form.chkDeposit.Size(3645,360)
+Gui.Form.chkDeposit.Position(210,195)
+Gui.Form.chkDeposit.Caption("Work order schedule with Advance Deposit")
+Gui.Form.chkDeposit.Event(Click,chkDeposit_Click)
+Gui.Form.chkNoDeposit.Create(CheckBox)
+Gui.Form.chkNoDeposit.Size(3990,360)
+Gui.Form.chkNoDeposit.Position(210,615)
+Gui.Form.chkNoDeposit.Caption("Work order schedule")
+Gui.Form.chkNoDeposit.Event(Click,chkNoDeposit_Click)
+Gui.Form.cmdCreate.Create(Button)
+Gui.Form.cmdCreate.Size(855,375)
+Gui.Form.cmdCreate.Position(210,1170)
+Gui.Form.cmdCreate.Caption("Create")
+Gui.Form.cmdCreate.Event(Click,cmdCreate_Click)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'This project was create through a PDA for Change Parts, by SKC on 5/10/2018.
+'All this will do is set the script 2 button on the Sales order Lines screen to Workflow.  Then when clicked it will show a screen where the user can check one checkbox.  Depending on the selection clicking create
+'will create one of the two possible work flows.  The title of the workflow will change to include the order-line number.  
+F.Intrinsic.Control.SelectCase(v.Caller.Hook)
+	F.Intrinsic.Control.Case(12010)
+		v.Passed.000141.Set("WorkFlow")
+	F.Intrinsic.Control.Case(12420)
+		Gui.Form..Show
+F.Intrinsic.Control.EndSelect
+Program.Sub.Main.End
+
+Program.Sub.cmdCreate_Click.Start
+v.Local.dDue.Declare
+v.Local.iID.Declare
+v.Local.iDays.Declare
+v.Local.sSql.Declare
+v.Local.iRet.Declare
+v.Local.sTitle.Declare
+v.Local.sOrder.Declare
+v.Local.sLine.Declare
+F.Intrinsic.String.LPad(v.Passed.000060, "0", 7, v.Local.sOrder)
+f.Intrinsic.String.LPad(v.Passed.000051, "0", 3, v.Local.sLine)
+F.ODBC.Connection!con.openCompanyConnection()
+F.Intrinsic.Control.If(v.Screen.Form!chkNoDeposit.Value,=, 1)
+	F.Global.WorkFlow.GetTemplateIDFromTitle("Work order schedule", v.Local.iID)
+	F.Intrinsic.String.Build("Select Completion_Time from ATG_WFT_LINES Where WFT_ID = '{0}' and Line = '1'", v.Local.iID, v.Local.sSql)
+	F.ODBC.Connection!con.ExecuteAndReturn(v.Local.sSql, v.Local.iDays)
+	F.Intrinsic.Date.DateAdd("d",v.Local.iDays, v.Ambient.Date, v.Local.dDue)
+	F.Intrinsic.String.Build("Work order schedule - {0}-{1}", v.Local.sOrder, v.Local.sLine, v.Local.sTitle)
+	F.Global.WorkFlow.CreateFromTemplate(v.Local.iID, v.Local.sTitle, v.Ambient.Date, v.Local.dDue,v.Caller.User,1, v.Local.iRet)
+F.Intrinsic.Control.Else(v.Screen.Form!chkDeposit.Value,=, 1)
+	F.Global.WorkFlow.GetTemplateIDFromTitle("Work order schedule with Advance Deposit", v.Local.iID)
+	F.Intrinsic.String.Build("Select Completion_Time from ATG_WFT_LINES Where WFT_ID = '{0}' and Line = '1'", v.Local.iID, v.Local.sSql)
+	F.ODBC.Connection!con.ExecuteAndReturn(v.Local.sSql, v.Local.iDays)
+	F.Intrinsic.Date.DateAdd("d",v.Local.iDays, v.Ambient.Date, v.Local.dDue)
+	F.Intrinsic.String.Build("Work order schedule with Advance Deposit - {0}-{1}", v.Local.sOrder, v.Local.sLine, v.Local.sTitle)
+	F.Global.WorkFlow.CreateFromTemplate(v.Local.iID, "Work order schedule with Advance Deposit", v.Ambient.Date, v.Local.dDue,v.Caller.User,1, v.Local.iRet)
+F.Intrinsic.Control.EndIf
+F.ODBC.Connection!con.Close
+F.Intrinsic.Control.CallSub(Form_UnLoad)
+Program.Sub.cmdCreate_Click.End
+
+Program.Sub.Form_UnLoad.Start
+F.Intrinsic.Control.End
+Program.Sub.Form_UnLoad.End
+
+Program.Sub.chkDeposit_Click.Start
+F.Intrinsic.Control.If(v.Screen.Form!chkNoDeposit.Value,=, 1)
+	Gui.Form.chkNoDeposit.Value(0)
+F.Intrinsic.Control.EndIf
+Program.Sub.chkDeposit_Click.End
+
+Program.Sub.chkNoDeposit_Click.Start
+F.Intrinsic.Control.If(v.Screen.Form!chkDeposit.Value,=, 1)
+	Gui.Form.chkDeposit.Value(0)
+F.Intrinsic.Control.EndIf
+Program.Sub.chkNoDeposit_Click.End
+
+
+
+
+
+
+
+
